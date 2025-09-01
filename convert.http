@@ -1,0 +1,14 @@
+
+POST http://localhost:8080/convert
+Content-Type: multipart/form-data; boundary=boundary
+
+--boundary
+Content-Disposition: form-data; name="file"; filename="sample.pdf"
+Content-Type: application/pdf
+
+< ./src/main/resources/rh-telefonica-colombia-case-study-f31097pr-202204-en_1.pdf
+--boundary
+Content-Disposition: form-data; name="outputFormat"
+
+json
+--boundary--
