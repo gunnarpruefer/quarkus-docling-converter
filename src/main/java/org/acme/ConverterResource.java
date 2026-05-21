@@ -1,7 +1,8 @@
 package org.acme;
 
-import io.quarkiverse.docling.runtime.client.model.ConvertDocumentResponse;
-import io.quarkiverse.docling.runtime.client.model.OutputFormat;
+import ai.docling.serve.api.convert.request.options.OutputFormat;
+import ai.docling.serve.api.convert.response.ConvertDocumentResponse;
+import ai.docling.serve.api.convert.response.InBodyConvertDocumentResponse;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
@@ -22,8 +23,6 @@ public class ConverterResource {
     @Inject
     Docling docling;
 
-    String textContent = "";
-
     @POST
     public Response convert(@RestForm("file") FileUpload file) {
         if (file == null) {
@@ -32,7 +31,6 @@ public class ConverterResource {
         }
 
         try {
-
             byte[] imageBytes = Files.readAllBytes(file.uploadedFile());
 
             ConvertDocumentResponse result = docling.convertFromBytes(
@@ -40,14 +38,13 @@ public class ConverterResource {
                     file.fileName(),
                     OutputFormat.TEXT);
 
-            this.textContent = result.getDocument().getTextContent();
+            String textContent = ((InBodyConvertDocumentResponse) result).getDocument().getTextContent();
+            return Response.ok(textContent).build();
 
         } catch (java.io.IOException e) {
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity("Failed to read uploaded file: " + e.getMessage())
                     .build();
         }
-
-        return Response.ok(textContent).build();
     }
 }

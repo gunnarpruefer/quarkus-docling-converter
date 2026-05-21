@@ -1,45 +1,53 @@
 package org.acme;
 
-import io.quarkiverse.docling.runtime.client.api.DoclingApi;
-import io.quarkiverse.docling.runtime.client.model.*;
+import ai.docling.serve.api.DoclingServeApi;
+import ai.docling.serve.api.convert.request.ConvertDocumentRequest;
+import ai.docling.serve.api.convert.request.options.ConvertDocumentOptions;
+import ai.docling.serve.api.convert.request.options.OutputFormat;
+import ai.docling.serve.api.convert.request.source.FileSource;
+import ai.docling.serve.api.convert.request.source.HttpSource;
+import ai.docling.serve.api.convert.response.ConvertDocumentResponse;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.net.URI;
 import java.util.Base64;
-import java.util.List;
 
 @ApplicationScoped
 public class Docling {
 
     @Inject
-    DoclingApi doclingApi;
+    DoclingServeApi doclingServeApi;
 
     public ConvertDocumentResponse convertFromUrl(URI uri, OutputFormat outputFormat) {
-        HttpSource source = new HttpSource();
-        source.setUrl(uri);
+        var source = HttpSource.builder()
+                .url(uri)
+                .build();
 
-        ConversionRequest request = new ConversionRequest()
-                .addHttpSourcesItem(source)
-                .options(new ConvertDocumentsOptions().toFormats(List.of(outputFormat)));
+        var request = ConvertDocumentRequest.builder()
+                .source(source)
+                .options(ConvertDocumentOptions.builder().toFormat(outputFormat).build())
+                .build();
 
-        return doclingApi.processUrlV1alphaConvertSourcePost(request);
+        return doclingServeApi.convertSource(request);
     }
 
     public ConvertDocumentResponse convertFromBytes(byte[] content, String filename, OutputFormat outputFormat) {
         String base64 = Base64.getEncoder().encodeToString(content);
-        return convertFromBase64ToText(base64, filename, outputFormat);
+        return convertFromBase64(base64, filename, outputFormat);
     }
 
-    public ConvertDocumentResponse convertFromBase64ToText(String base64, String filename, OutputFormat outputFormat) {
-        FileSource source = new FileSource()
+    public ConvertDocumentResponse convertFromBase64(String base64, String filename, OutputFormat outputFormat) {
+        var source = FileSource.builder()
                 .base64String(base64)
-                .filename(filename);
+                .filename(filename)
+                .build();
 
-        ConversionRequest request = new ConversionRequest()
-                .addFileSourcesItem(source)
-                .options(new ConvertDocumentsOptions().toFormats(List.of(outputFormat)));
+        var request = ConvertDocumentRequest.builder()
+                .source(source)
+                .options(ConvertDocumentOptions.builder().toFormat(outputFormat).build())
+                .build();
 
-        return doclingApi.processUrlV1alphaConvertSourcePost(request);
+        return doclingServeApi.convertSource(request);
     }
 }
